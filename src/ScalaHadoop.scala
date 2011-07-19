@@ -223,12 +223,12 @@ class MapReduceTaskChain[KIN, VIN, KOUT, VOUT] extends Cloneable {
 
       if (prev.inputs.isEmpty) {
         job setInputFormatClass    prev.defaultInput.inFormatClass;
-        System.err.println("Adding input path: " + prev.defaultInput.dirName);
+        // System.err.println("Adding input path: " + prev.defaultInput.dirName);
         lib.input.FileInputFormat.addInputPath(job, new Path(prev.defaultInput.dirName));
       } else {
         job setInputFormatClass   prev.inputs(0).inFormatClass;
         prev.inputs.foreach ((io) => {
-          System.err.println("Adding input path: " + io.dirName);
+          // System.err.println("Adding input path: " + io.dirName);
           lib.input.FileInputFormat.addInputPath(job, new Path(io.dirName))
         })
       }
