@@ -19,7 +19,7 @@ object IO {
 
   class Output[K,V] (
     val dirName        : String,
-    val outFormatClass : java.lang.Class[_ <: lib.output.FileOutputFormat[K,V]]
+    val outFormatClass : java.lang.Class[_ <: OutputFormat[K,V]]
   ){}
 
 
@@ -29,7 +29,7 @@ object IO {
   class IO[KWRITE, VWRITE, KREAD, VREAD] 
     (dirName        : String, 
      inFormatClass  : Class[_ <: InputFormat[KREAD, VREAD]], 
-     outFormatClass : Class[lib.output.FileOutputFormat[KWRITE,VWRITE]]) { 
+     outFormatClass : Class[_ <: OutputFormat[KWRITE,VWRITE]]) {
        val input:  Input[KREAD, VREAD]   = new Input(dirName,  inFormatClass);
        val output: Output[KWRITE,VWRITE] = new Output(dirName, outFormatClass);
       }
@@ -219,18 +219,24 @@ class MapReduceTaskChain[KIN, VIN, KOUT, VOUT] extends Cloneable {
       jobModifiers foreach ((mod : JobModifier) => mod(job))
 
       job setOutputFormatClass   output.outFormatClass;
-      lib.output.FileOutputFormat.setOutputPath(job, new Path(output.dirName));
+      // Only set the output dir if the output format class is an instance of FileOutputFormat
+      if (classOf[lib.output.FileOutputFormat[KOUT, VOUT]].isAssignableFrom(output.outFormatClass)) {
+        lib.output.FileOutputFormat.setOutputPath(job, new Path(output.dirName));
+      }
 
       if (prev.inputs.isEmpty) {
         job setInputFormatClass    prev.defaultInput.inFormatClass;
-        // System.err.println("Adding input path: " + prev.defaultInput.dirName);
-        lib.input.FileInputFormat.addInputPath(job, new Path(prev.defaultInput.dirName));
+        // Only set the input dir if the input format class is an instance of FileInputFormat
+        if (classOf[lib.input.FileInputFormat[KIN, VIN]].isAssignableFrom(prev.defaultInput.inFormatClass)) {
+          lib.input.FileInputFormat.addInputPath(job, new Path(prev.defaultInput.dirName));
+        }
       } else {
         job setInputFormatClass   prev.inputs(0).inFormatClass;
-        prev.inputs.foreach ((io) => {
-          // System.err.println("Adding input path: " + io.dirName);
-          lib.input.FileInputFormat.addInputPath(job, new Path(io.dirName))
-        })
+        if (classOf[lib.input.FileInputFormat[KIN, VIN]].isAssignableFrom(prev.inputs(0).inFormatClass)) {
+          prev.inputs.foreach ((io) => {
+            lib.input.FileInputFormat.addInputPath(job, new Path(io.dirName))
+          })
+        }
       }
 
       job waitForCompletion true;
