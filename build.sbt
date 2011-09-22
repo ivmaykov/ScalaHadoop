@@ -23,5 +23,16 @@ seq(sbtassembly.Plugin.assemblySettings: _*)
 
 jarName in Assembly := "ScalaHadoop.jar"
 
+// This is so that sbt-assembly will exclude the Hadoop jars.
+dependencyClasspath in Assembly <<= (dependencyClasspath in Assembly, baseDirectory) map { (deps, base) =>
+  val compile = (file(System.getenv("HADOOP_HOME")) ** "*.jar").get
+  deps filter { d => !(compile contains d.data) }
+}
+
+fullClasspath in Assembly <<= (fullClasspath in Assembly, baseDirectory) map { (cp, base) =>
+  val compile = (file(System.getenv("HADOOP_HOME")) ** "*.jar").get
+  cp filter { d => !(compile contains d.data) }
+}
+
 // Avoid packaging the scala library jar in the assembly
 //publishArtifact in (Assembly, packageScala) := false
