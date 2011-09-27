@@ -210,8 +210,12 @@ class MapReduceTaskChain[KIN, VIN, KOUT, VOUT] extends Cloneable {
 
 
   def execute() : Boolean = {
-    if(prev != null)
-      prev.execute();
+    if(prev != null) {
+      val prevResult = prev.execute();
+      // If the previous step fails, don't try to run the current step and return false instead.
+      if (!prevResult)
+        return false;
+    }
 
     if(task != null) {
       val conf = getConf; 
@@ -246,10 +250,10 @@ class MapReduceTaskChain[KIN, VIN, KOUT, VOUT] extends Cloneable {
         }
       }
 
-      job waitForCompletion true;
-      return true;
+      return job waitForCompletion true;
     }
 
+    // Fall-through case: if there was nothing to do, return success.
     return true;
   }
 
