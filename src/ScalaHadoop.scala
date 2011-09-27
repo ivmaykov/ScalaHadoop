@@ -79,8 +79,15 @@ object MapReduceTaskChain {
   class SetParam(val param: String, val value: String) extends ConfModifier {
      def apply(c: Configuration) = {c.set(param, value);} 
   }
-  def Param(p: String, v: String) = new SetParam(p,v); 
+  def Param(p: String, v: String) = new SetParam(p,v);
 
+  class SetParamThroughReflection(val methodName: String, val argTypes: Array[java.lang.Class[_]], val args: Array[Any]) extends ConfModifier {
+    def apply(c: Configuration) = {
+      val clazz : java.lang.Class[_] = c.getClass
+      val method = clazz.getMethod(methodName, argTypes: _*)
+      method.invoke(c, args.map(_.asInstanceOf[AnyRef]): _*)
+    }
+  }
 
   def init(conf: Configuration ) : MapReduceTaskChain[None.type, None.type, None.type, None.type] =  {
      val c = new MapReduceTaskChain[None.type, None.type, None.type, None.type]();
