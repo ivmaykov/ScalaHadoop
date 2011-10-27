@@ -272,8 +272,18 @@ abstract class MapReduceTask[KIN, VIN, KOUT, VOUT]   {
 
   def initJob(job: Job) = {
     job setMapperClass         mapper.getClass.asInstanceOf[java.lang.Class[ Mapper[_,_,_,_]]];
+    // If mapper / combiner / reducer mixin JobModifier or ConfModifier, make sure to allow them to
+    // modify the job or configuration state.
+    mapper match {
+      case jobModifier: JobModifier => jobModifier.apply(job)
+      case confModifier: ConfModifier => confModifier.apply(job.getConfiguration)
+    }
     if (combiner != null) {
       job setCombinerClass  combiner.getClass.asInstanceOf[java.lang.Class[ Reducer[_,_,_,_]]];
+      combiner match {
+        case jobModifier: JobModifier => jobModifier.apply(job)
+        case confModifier: ConfModifier => confModifier.apply(job.getConfiguration)
+      }
     }
     if (reducer != null) {
         job setReducerClass       reducer.getClass.asInstanceOf[java.lang.Class[ Reducer[_,_,_,_]]];
@@ -281,6 +291,10 @@ abstract class MapReduceTask[KIN, VIN, KOUT, VOUT]   {
         job setMapOutputValueClass mapper.vType;
         job setOutputKeyClass     reducer.kType;
         job setOutputValueClass   reducer.vType;
+        reducer match {
+          case jobModifier: JobModifier => jobModifier.apply(job)
+          case confModifier: ConfModifier => confModifier.apply(job.getConfiguration)
+        }
       }
       else {
         job setOutputKeyClass     mapper.kType;
