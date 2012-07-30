@@ -4,16 +4,19 @@ name := "ScalaHadoop"
 
 scalaVersion := "2.9.1"
 
+resolvers += "Cloudera's CDH3 Maven repo" at "https://repository.cloudera.com/artifactory/cloudera-repos/"
+
+libraryDependencies ++= Seq(
+  "commons-logging" % "commons-logging" % "1.0.4",
+  "commons-codec" % "commons-codec" % "1.4",
+  "org.apache.hadoop" % "hadoop-core" % "0.20.2-cdh3u1"
+)
+
+
 // sbt defaults to <project>/src/test/{scala,java} unless we put this in
 // unmanagedSourceDirectories in Test <<= Seq( baseDirectory( _ / "test" ) ).join
 
 unmanagedSourceDirectories in Compile <<= Seq( baseDirectory( _ / "src" ) ).join
-
-unmanagedJars in Compile <++= baseDirectory map { base =>
-   val baseDirectories = file(System.getenv("HADOOP_HOME"))
-   val customJars = (baseDirectories ** "*.jar")
-   customJars.classpath
-}
 
 // This is to prevent error [java.lang.OutOfMemoryError: PermGen space]
 javaOptions += "-XX:MaxPermSize=256m"
