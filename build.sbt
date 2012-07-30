@@ -1,3 +1,5 @@
+import AssemblyKeys._
+
 name := "ScalaHadoop"
 
 scalaVersion := "2.9.1"
@@ -19,17 +21,17 @@ javaOptions += "-XX:MaxPermSize=256m"
 javaOptions += "-Xmx1024m"
 
 // For the sbt-assembly plugin to be able to generate single JAR files for easy deploys
-seq(sbtassembly.Plugin.assemblySettings: _*)
+assemblySettings
 
-jarName in Assembly := "ScalaHadoop.jar"
+jarName in assembly := "ScalaHadoop.jar"
 
 // This is so that sbt-assembly will exclude the Hadoop jars.
-dependencyClasspath in Assembly <<= (dependencyClasspath in Assembly, baseDirectory) map { (deps, base) =>
+dependencyClasspath in assembly <<= (dependencyClasspath in assembly, baseDirectory) map { (deps, base) =>
   val compile = (file(System.getenv("HADOOP_HOME")) ** "*.jar").get
   deps filter { d => !(compile contains d.data) }
 }
 
-fullClasspath in Assembly <<= (fullClasspath in Assembly, baseDirectory) map { (cp, base) =>
+fullClasspath in assembly <<= (fullClasspath in assembly, baseDirectory) map { (cp, base) =>
   val compile = (file(System.getenv("HADOOP_HOME")) ** "*.jar").get
   cp filter { d => !(compile contains d.data) }
 }
